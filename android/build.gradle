@@ -1,5 +1,9 @@
 buildscript {
-    ext.kotlin_version = '1.6.21'
+
+  // ManagerH: Change Kotlin verision Java 11 azul------------------------
+    ext.kotlin_version = '1.8.0'
+  // ManagerH: Change Kotlin verision Java 11 azul------------------------
+
     repositories {
         google()
         mavenCentral()

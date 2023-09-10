@@ -1,42 +1,91 @@
+import 'package:background/home_widget.dart';
+import 'package:background/home_widget_default.dart';
+import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
-// Manager: Background service ------------------------
+// ManagerH: Usefull functions ------------------------
+
+Future<void> _updateWidget(int totalExecutions) async {
+  const appGroupId = 'MyAppName';
+  const iOSWidgetName = 'NewAppWidget';
+  const androidWidgetName = 'NewAppWidget';
+
+  await HomeWidget.setAppGroupId(appGroupId);
+
+  await HomeWidget.renderFlutterWidget(
+    WHomeHideget(index: totalExecutions),
+    key: 'filename',
+    logicalSize: const Size(100, 100),
+    pixelRatio: 1,
+  );
+
+  await HomeWidget.updateWidget(
+    iOSName: iOSWidgetName,
+    androidName: androidWidgetName,
+  );
+}
+
+void _defaultWidget() async {
+  const appGroupId = 'MyAppName';
+  const iOSWidgetName = 'NewAppWidget';
+  const androidWidgetName = 'NewAppWidget';
+
+  await HomeWidget.setAppGroupId(appGroupId);
+
+  await HomeWidget.renderFlutterWidget(
+    const WHomeHidegetDefault(),
+    key: 'filename',
+    logicalSize: const Size(100, 100),
+    pixelRatio: 1,
+  );
+
+  HomeWidget.updateWidget(
+    iOSName: iOSWidgetName,
+    androidName: androidWidgetName,
+  );
+}
+
+@pragma('vm:entry-point')
+void _callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      int? totalExecutions;
+
+      final sharedPreference = await SharedPreferences.getInstance();
+      totalExecutions = sharedPreference.getInt("totalExecutions") ?? 1;
+
+      await _updateWidget(totalExecutions);
+
+      await sharedPreference.setInt("totalExecutions", totalExecutions + 1);
+    } catch (err) {
+      Logger().e(err.toString());
+      throw Exception(err);
+    }
+
+    return Future.value(true);
+  });
+}
+
+// ManagerH: Background service ------------------------
 class ServiceBackground {
   static init() {
+    Workmanager().cancelAll();
     Workmanager().initialize(
-      callbackDispatcher,
+      _callbackDispatcher,
       isInDebugMode: true,
     );
     Workmanager().registerPeriodicTask(
-      "periodic-task-identifier",
-      "simplePeriodicTask",
-      frequency: const Duration(minutes: 15),
+      "task-identifier",
+      "simpleTask",
+      initialDelay: const Duration(seconds: 10),
       constraints: Constraints(
         networkType: NetworkType.connected,
       ),
     );
-  }
 
-  // Setup background task-----------------
-  @pragma('vm:entry-point')
-  static void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) async {
-      int? totalExecutions;
-      final sharedPreference = await SharedPreferences.getInstance();
-
-      try {
-        totalExecutions = sharedPreference.getInt("totalExecutions");
-        sharedPreference.setInt("totalExecutions", totalExecutions == null ? 1 : totalExecutions + 1);
-
-        print(totalExecutions);
-      } catch (err) {
-        Logger().e(err.toString());
-        throw Exception(err);
-      }
-
-      return Future.value(true);
-    });
+    _defaultWidget();
   }
 }

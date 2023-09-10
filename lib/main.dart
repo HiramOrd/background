@@ -2,12 +2,12 @@ import 'package:background/material.dart';
 import 'package:background/services/background.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Manager: Init------------------------
+  // ManagerH: Init------------------------
   ServiceBackground.init();
-  // Manager: Init------------------------
+  // ManagerH: Init------------------------
 
   runApp(const MyApp());
 }
